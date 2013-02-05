@@ -3,7 +3,7 @@
 module Collector
   # Varz metric handler
   #
-  # It's used for processing varz from jobs and publishing them to the TSDB
+  # It's used for processing varz from jobs and publishing them to the datadog
   # server
   class Handler
     @handler_map = {}
@@ -26,18 +26,18 @@ module Collector
       # default to the generic one if the job does not have a handler
       # registered.
       #
-      # @param [TsdbConnection] tsdb_connection the TSDB connection to use for
+      # @param [datadogConnection] datadog_connection the datadog connection to use for
       #   writing metrics
       # @param [String] job the job name
       # @param [Fixnum] index the job index
       # @param [Fixnum] now the timestamp of when the metrics were collected
       # @return [Handler] the handler for this job from the handler map or the
       #   default one
-      def handler(tsdb_connection, job, index, now)
+      def handler(datadog_connection, job, index, now)
         if handler_class = Handler.handler_map[job]
-          handler_class.new(tsdb_connection, job, index, now)
+          handler_class.new(datadog_connection, job, index, now)
         else
-          Handler.new(tsdb_connection, job, index, now)
+          Handler.new(datadog_connection, job, index, now)
         end
       end
     end
@@ -53,12 +53,12 @@ module Collector
 
     # Creates a new varz handler
     #
-    # @param [Collector::TsdbConnection] tsdb_connection
+    # @param [Collector::datadogConnection] datadog_connection
     # @param [String] job the job for this varz
     # @param [Fixnum] index the index for this varz
     # @param [Fixnum] now the timestamp when it was collected
-    def initialize(tsdb_connection, job, index, now)
-      @tsdb_connection = tsdb_connection
+    def initialize(datadog_connection, job, index, now)
+      @datadog_connection = datadog_connection
       @job = job
       @index = index
       @now = now
@@ -71,20 +71,17 @@ module Collector
     def process(varz)
     end
 
-    # Sends the metric to the TSDB server
+    # Sends the metric to the datadog server
     #
     # @param [String] name the metric name
     # @param [String, Fixnum] value the metric value
     # @param [Hash] tags the metric tags
     def send_metric(name, value, tags = {})
-      tags = tags.merge({:job => @job, :index => @index}).
-                  collect { |tag| tag.join("=") }.sort.join(" ")
-      command = "put #{name} #{@now} #{value} #{tags}\n"
-      @logger.debug1(command)
-      @tsdb_connection.send_data(command)
+      tags = tags.merge({:host =>"#{@job}#{@index}", :tags => "job:#{@job}"})
+      @datadog_connection.send_point(name, value, tags)
     end
 
-    # Sends latency metrics to the TSDB server
+    # Sends latency metrics to the datadog server
     #
     # @param [String] name the metric name
     # @param [Hash] value the latency metric value

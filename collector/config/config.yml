@@ -2,9 +2,9 @@
 index: 0
 logging:
   level: info
-tsdb:
-  host: localhost
-  port: 4242
+datadog_key:
+  api_key: one_key
+  application_key: another_key
 mbus: nats://localhost:4222
 intervals:
   discover: 60

@@ -8,8 +8,8 @@ module Collector
       OPTIONS = [
         :index,
         :logger,
-        :tsdb_host,
-        :tsdb_port,
+        :dd_api_key,
+        :dd_app_key,
         :nats_uri,
         :discover_interval,
         :varz_interval,
@@ -29,8 +29,9 @@ module Collector
         VCAP::Logging.setup_from_config(config["logging"])
         @logger = VCAP::Logging.logger("collector")
 
-        @tsdb_host = config["tsdb"]["host"]
-        @tsdb_port = config["tsdb"]["port"]
+        @dd_api_key = config["datadog_key"]["api_key"]
+        @dd_app_key = config["datadog_key"]["application_key"]
+
         @nats_uri = config["mbus"]
 
         intervals = config["intervals"]
